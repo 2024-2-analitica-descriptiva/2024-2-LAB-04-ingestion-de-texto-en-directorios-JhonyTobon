@@ -4,10 +4,66 @@
 """
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
+import os
+import zipfile
+import pandas as pd
 
+zip_file_path = 'files/input.zip'
+extract_to = 'files/'
+
+os.makedirs (extract_to, exist_ok=True)
+
+with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    zip_ref.extractall(extract_to)
 
 def pregunta_01():
-    """
+
+    data = []
+
+    directories = ['train', 'test']
+
+    for directory in directories:
+        for target in ['negative','positive','neutral']:
+            target_path = os.path.join('files','input', directory, target)
+
+            if not os.path.exists(target_path):
+                print(f'El directorio {target_path} no existe.')
+                continue
+
+            for file_name in os.listdir(target_path):
+                if file_name.endswith('.txt'):
+                    file_path = os.path.join(target_path, file_name)
+
+
+                    with open(file_path,'r', encoding='utf-8') as file:
+                        content = file.read().strip()
+
+                    data.append({
+                        'phrase': content,  
+                        'target': target,
+                        'dataset': directory   
+                    })
+
+    df = pd.DataFrame(data)
+
+    return df
+
+df = pregunta_01()
+
+output_dir = 'files/output'
+os.makedirs(output_dir, exist_ok=True)
+    
+df_train = df[df['dataset'] == 'train']
+df_test = df[df['dataset'] == 'test']
+
+df_train = df_train.drop(columns=['dataset'])
+df_test = df_test.drop(columns= ['dataset'])
+
+df_train.to_csv(os.path.join(output_dir, 'train_dataset.csv'), index = False)
+df_test.to_csv(os.path.join(output_dir, 'test_dataset.csv'), index = False)
+
+
+"""
     La información requerida para este laboratio esta almacenada en el
     archivo "files/input.zip" ubicado en la carpeta raíz.
     Descomprima este archivo.
@@ -53,7 +109,7 @@ def pregunta_01():
     Estos archivos deben tener la siguiente estructura:
 
     * phrase: Texto de la frase. hay una frase por cada archivo de texto.
-    * sentiment: Sentimiento de la frase. Puede ser "positive", "negative"
+    * target: Sentimiento de la frase. Puede ser "positive", "negative"
       o "neutral". Este corresponde al nombre del directorio donde se
       encuentra ubicado el archivo.
 
